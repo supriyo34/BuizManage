@@ -9,7 +9,7 @@ import Admin from './pages/Admin';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
 function App() {
-  const [user, setUser] = useState({ name: 'John Doe' });
+  const [user, setUser] = useState({ name: 'Supriyo Dhar' });
   const handleLogout = () => { setUser(null); alert('Logged out successfully!'); };
 
   return (
