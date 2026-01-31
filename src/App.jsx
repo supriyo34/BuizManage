@@ -13,7 +13,7 @@ function App() {
   return (
     <>
       <Navbar user={user} onLogout={handleLogout} />
-      <main style={{ padding: '2rem' }}>
+      <main style={{ padding: '2rem', margin: 0 }}>
         <h1>Welcome to BuizManage</h1>
         <p>Expense & Budget Management System</p>
       </main>
