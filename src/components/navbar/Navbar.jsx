@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
+import { NavLink } from 'react-router-dom';
 import './Navbar.css';
 import { Menu, X, LogOut, User } from 'lucide-react';
 
 const Navbar = ({ user, onLogout }) => {
   const [isOpen, setIsOpen] = useState(false);
-
-  const toggleMenu = () => {
-    setIsOpen(!isOpen);
-  };
+  const toggleMenu = () => setIsOpen(!isOpen);
+  const activeClass = ({ isActive }) => isActive ? 'nav-link active' : 'nav-link';
 
   return (
     <nav className="navbar">
@@ -25,19 +24,19 @@ const Navbar = ({ user, onLogout }) => {
         {/* Navigation Links */}
         <ul className={`nav-menu ${isOpen ? 'active' : ''}`}>
           <li className="nav-item">
-            <a href="/dashboard" className="nav-link">Dashboard</a>
+            <NavLink to="/dashboard" className={activeClass}>Dashboard</NavLink>
           </li>
           <li className="nav-item">
-            <a href="/expenses" className="nav-link">My Expenses</a>
+            <NavLink to="/expenses" className={activeClass}>My Expenses</NavLink>
           </li>
           <li className="nav-item">
-            <a href="/approvals" className="nav-link">Approvals</a>
+            <NavLink to="/approvals" className={activeClass}>Approvals</NavLink>
           </li>
           <li className="nav-item">
-            <a href="/budget" className="nav-link">Budget</a>
+            <NavLink to="/budget" className={activeClass}>Budget</NavLink>
           </li>
           <li className="nav-item">
-            <a href="/admin" className="nav-link">Admin</a>
+            <NavLink to="/admin" className={activeClass}>Admin</NavLink>
           </li>
         </ul>
 
