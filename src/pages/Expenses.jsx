@@ -1,45 +1,94 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function Expenses() {
   const [expenses, setExpenses] = useState([]);
   const [showForm, setShowForm] = useState(false);
 
   const [formData, setFormData] = useState({
+    title: '',
     amount: '',
     category: '',
-    date: '',
-    attachment: null
+    date: ''
   });
 
+  const API_URL = "https://localhost:7066/api/Expenses";
+
+  // ✅ Fetch expenses
+  useEffect(() => {
+    fetch(API_URL)
+      .then(res => res.json())
+      .then(data => {
+        console.log("API DATA:", data);
+        setExpenses(Array.isArray(data) ? data : data?.$values || []);
+      })
+      .catch(err => console.error("Fetch error:", err));
+  }, []);
+
+  // Handle input
   const handleChange = (e) => {
-    const { name, value, files } = e.target;
     setFormData({
       ...formData,
-      [name]: files ? files[0] : value
+      [e.target.name]: e.target.value
     });
   };
 
-  const handleSubmit = (e) => {
+  // ✅ Submit expense
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const newExpense = {
-      id: Date.now(),
-      ...formData,
-      status: 'Pending'
-    };
+    try {
+      const payload = {
+        title: formData.title,
+        amount: Number(formData.amount),
+        category: formData.category,
+        date: new Date(formData.date).toISOString()
+      };
 
-    setExpenses([newExpense, ...expenses]);
-    setShowForm(false);
+      console.log("Sending:", payload);
 
-    setFormData({
-      amount: '',
-      category: '',
-      date: '',
-      attachment: null
-    });
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
 
-    alert('Expense submitted! Manager notified.');
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("API error:", errorText);
+        throw new Error("Failed to save");
+      }
+
+      const result = await response.json();
+
+      // ✅ Update UI
+      setExpenses(prev => [result, ...prev]);
+
+      // Reset form
+      setFormData({
+        title: '',
+        amount: '',
+        category: '',
+        date: ''
+      });
+
+      setShowForm(false);
+
+      alert("Expense saved!");
+    } catch (err) {
+      console.error("Submit error:", err);
+      alert("Error saving expense");
+    }
   };
+
+  // Format date safely
+  const formatDate = (dateString) => {
+    if (!dateString) return "No date";
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  const safeExpenses = Array.isArray(expenses) ? expenses : [];
 
   return (
     <section style={styles.page}>
@@ -50,12 +99,24 @@ export default function Expenses() {
         </button>
       </div>
 
-      {/* Add Expense Form */}
+      {/* Form */}
       {showForm && (
         <div style={styles.card}>
           <h3>Add New Expense</h3>
 
           <form onSubmit={handleSubmit} style={styles.form}>
+            
+            <div style={styles.formGroup}>
+              <label>Title</label>
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
             <div style={styles.formGroup}>
               <label>Amount</label>
               <input
@@ -63,7 +124,6 @@ export default function Expenses() {
                 name="amount"
                 value={formData.amount}
                 onChange={handleChange}
-                placeholder="Enter amount"
                 required
               />
             </div>
@@ -75,7 +135,6 @@ export default function Expenses() {
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                placeholder="Food, Travel, etc."
                 required
               />
             </div>
@@ -89,11 +148,6 @@ export default function Expenses() {
                 onChange={handleChange}
                 required
               />
-            </div>
-
-            <div style={styles.formGroup}>
-              <label>Attachment</label>
-              <input type="file" name="attachment" onChange={handleChange} />
             </div>
 
             <div style={styles.actions}>
@@ -112,23 +166,24 @@ export default function Expenses() {
         </div>
       )}
 
-      {/* Expense List */}
+      {/* List */}
       <h3 style={{ marginTop: '2rem' }}>Submitted Expenses</h3>
 
-      {expenses.length === 0 ? (
-        <p style={{ opacity: 0.7 }}>No expenses submitted yet.</p>
+      {safeExpenses.length === 0 ? (
+        <p>No expenses found.</p>
       ) : (
         <div style={styles.list}>
-          {expenses.map((exp) => (
+          {safeExpenses.map((exp) => (
             <div key={exp.id} style={styles.expenseCard}>
               <div>
-                <strong>₹{exp.amount}</strong>
-                <div style={{ fontSize: '0.9rem', opacity: 0.8 }}>
-                  {exp.category} • {exp.date}
+                <strong>{exp.title}</strong>
+                <div>₹{exp.amount}</div>
+                <div style={{ fontSize: '0.85rem', opacity: 0.7 }}>
+                  {exp.category} • {formatDate(exp.date)}
                 </div>
               </div>
 
-              <span style={styles.status}>{exp.status}</span>
+              <span style={styles.status}>Pending</span>
             </div>
           ))}
         </div>
@@ -144,7 +199,7 @@ const styles = {
     padding: '2rem',
     maxWidth: '900px',
     margin: '0 auto',
-    fontFamily: 'Arial, sans-serif'
+    fontFamily: 'Arial'
   },
   header: {
     display: 'flex',
@@ -196,7 +251,6 @@ const styles = {
   expenseCard: {
     display: 'flex',
     justifyContent: 'space-between',
-    alignItems: 'center',
     padding: '1rem',
     borderRadius: '8px',
     background: '#f9fafb',
@@ -206,7 +260,6 @@ const styles = {
     background: '#fef3c7',
     color: '#92400e',
     padding: '0.3rem 0.6rem',
-    borderRadius: '12px',
-    fontSize: '0.8rem'
+    borderRadius: '10px'
   }
 };
